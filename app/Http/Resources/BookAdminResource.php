@@ -20,12 +20,27 @@ class BookAdminResource extends JsonResource
             'description' => $this['description'],
             'level' => 'Level ' .  $this['level'],
             'cover_image' => asset($this['cover_image']),
-            'pdf' => $this['pdf_path'],
-            'video' => asset($this['video']),
+            'pdf' => $this->getPdfLink(),
+            'video' => $this->getVideoLink(),
 //            'video_url' => $this['video_url'],
             'categories' => BookCategoryResource::collection($this['categories']),
             'images' => BookImageResource::collection($this['images']),
             'book_header_id' => $this['book_header_id'],
         ];
+    }
+    private function getPdfLink()
+    {
+        if ($this['pdf_path']) {
+            return asset('storage/' . $this['pdf_path']);
+        }
+        return null;
+    }
+
+    private function getVideoLink()
+    {
+        if ($this['video']) {
+            return asset( $this['video']);
+        }
+        return null;
     }
 }
