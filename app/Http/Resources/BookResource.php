@@ -13,14 +13,29 @@ class BookResource extends JsonResource
             'id' => $this['id'],
             'title' => $this['title'],
             'description' => $this['description'],
-            'level' => 'Level ' .  $this['level'],
+            'level' => 'Level ' . $this['level'],
             'cover_image' => asset($this['cover_image']),
-//            'pdf' => $this['pdf_path'],
-//            'video' => asset($this['video']),
-//            'video_url' => $this['video_url'],
+            'pdf' => $this->getPdfLink(),
+            'video' => $this->getVideoLink(),
             'categories' => BookCategoryResource::collection($this['categories']),
             'images' => BookImageResource::collection($this['images']),
             'book_header_id' => $this['book_header_id'],
         ];
+    }
+
+    private function getPdfLink()
+    {
+        if ($this['pdf_path']) {
+            return asset('storage/' . $this['pdf_path']);
+        }
+        return null;
+    }
+
+    private function getVideoLink()
+    {
+        if ($this['video']) {
+            return asset('storage/' . $this['video']);
+        }
+        return null;
     }
 }

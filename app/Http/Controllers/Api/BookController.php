@@ -167,7 +167,7 @@ class BookController extends Controller
 
         // Add the PDF link if it exists
         if ($book->pdf_path) {
-            $pdfLink = asset($book->pdf_path);
+            $pdfLink = asset('storage/'.$book->pdf_path);
             $links['pdf'] = $pdfLink;
         }
 
