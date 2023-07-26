@@ -39,6 +39,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //BookHeaders Routes
     Route::middleware('role:admin')->group(function () {
 
+    Route::get('/get-users', [AdminController::class, 'getAllUsers']);
     Route::post('/book-header-delete/{id}', [BookHeaderController::class, 'destroy']);
     Route::get('/book-headers', [BookHeaderController::class, 'index']);
     Route::post('/book-headers', [BookHeaderController::class, 'store']);

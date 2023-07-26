@@ -145,9 +145,10 @@ class BookController extends Controller
             ]);
 
             $phone = request('phone');
+            $user = User::where('phone', $phone)->first();
 
-            if (!User::where('phone', $phone)->exists()) {
-                User::create(request()->only(['name', 'email', 'phone', 'position']));
+            if (!$user->exists()) {
+                $userData = User::create($request->all());
             }
         } else {
             $this->validate(request(), [

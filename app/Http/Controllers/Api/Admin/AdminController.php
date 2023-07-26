@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminLoginRequest;
+use App\Http\Resources\UserResource;
 use App\Http\Traits\HandleApi;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,6 +30,15 @@ class AdminController extends Controller
             }
         } else {
             return $this->sendError('error', 'Invalid credentials');
+        }
+    }
+
+    public function getAllUsers()
+    {
+        $user = request()->user();
+        if ($user->hasRole('admin')) {
+            $users = User::where('id', '<>', 1)->get();
+            return $this->sendResponse(UserResource::collection($users), 'All users data fetched successfully');
         }
     }
 
