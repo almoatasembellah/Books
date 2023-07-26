@@ -39,6 +39,7 @@ class BookAdminResource extends JsonResource
     private function getVideoLink()
     {
         if ($this['video']) {
+
             return asset( $this['video']);
         }
         return null;
