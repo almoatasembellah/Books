@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookRequest;
+use App\Http\Resources\BookAdminResource;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\SerialResource;
 use App\Http\Traits\HandleApi;
@@ -28,7 +29,7 @@ class BookController extends Controller
     {
         $user = request()->user();
         if ($user->hasRole('admin')) {
-            return self::sendResponse(BookResource::collection(Book::paginate(25)), 'All Books are fetched');
+            return $this->sendResponse(BookAdminResource::collection(Book::paginate(25)), 'All Books are fetched for admin');
         }
     }
 
@@ -36,7 +37,7 @@ class BookController extends Controller
     public function getAllBooksForUsers()
     {
         $books = Book::paginate(25);
-        return BookResource::collection($books);
+        return $this->sendResponse(BookResource::collection($books),'All Books are fetched for users');
     }
 
     public function store(BookRequest $request)
@@ -141,7 +142,6 @@ class BookController extends Controller
                 'email' => 'required|email',
                 'phone' => 'required|string',
                 'position' => 'required|string',
-                'type' => 'required|in:book,video',
             ]);
 
             $phone = request('phone');
@@ -152,7 +152,6 @@ class BookController extends Controller
         } else {
             $this->validate(request(), [
                 'material_code' => 'required|string',
-                'type' => 'required|in:book,video',
             ]);
 
             $check = Serial::where('material_code', $request->input('material_code'))->firstOrFail();
@@ -163,14 +162,27 @@ class BookController extends Controller
             }
         }
 
+        // Create an array to store the links
+        $links = [];
 
-        if ($request->input('type') === 'book') {
-            return $this->initiateDownload($book);
-        } elseif ($request->input('type') === 'video') {
-            return $this->initiateVideoDownload($book);
-        } else {
-            return $this->sendError('Invalid Type', 'The specified type is invalid. Use "book" or "video".');
+        // Add the PDF link if it exists
+        if ($book->pdf_path) {
+            $pdfLink = asset($book->pdf_path);
+            $links['pdf'] = $pdfLink;
         }
+
+        // Add the video link if it exists
+        if ($book->video) {
+            $videoLink = asset($book->video);
+            $links['video'] = $videoLink;
+        }
+
+        // Check if any links were found, and send the response accordingly
+        if (empty($links)) {
+            return $this->sendError('File not found', 'No PDF or video link available.', 404);
+        }
+
+        return $this->sendResponse($links, 'Download links for PDF and video');
     }
 
 

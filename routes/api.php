@@ -30,7 +30,7 @@ Route::get('/get-books-for-categories',[CategoryController::class, 'getBooksByCa
 Route::get('/get-book-for-id/{id}', [BookController::class, 'showSpecificBook']);
 
 //Download Routes
-Route::get('/books/download/{id}', [BookController::class, 'downloadFile']);
+Route::post('/books/download/{id}', [BookController::class, 'downloadFile']);
 //Route::post('download-book', [BookController::class , 'downloadBook']);
 //Route::post('download-video/{id}', [BookController::class , 'downloadVideo']);
 
