@@ -8,22 +8,32 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Book extends Model
 {
+    protected $casts = [
+        'pdf_path' => 'array',
+    ];
+
     protected $fillable = [
         'title',
         'description',
         'level',
         'cover_image',
-        'pdf_path',
-        'video_url',
-        'video',
         'book_header_id',
         'category_id',
-//        'serial_code'
     ];
 
     public function images(): HasMany
     {
         return $this->hasMany(BookImage::class);
+    }
+
+    public function videos(): HasMany
+    {
+        return $this->hasMany(BookVideo::class);
+    }
+
+    public function pdfs(): HasMany
+    {
+        return $this->hasMany(BookPdf::class);
     }
 
     public function categories(): BelongsToMany

@@ -12,11 +12,14 @@ use App\Http\Traits\HandleApi;
 use App\Models\Book;
 use App\Models\BookCategory;
 use App\Models\BookImage;
+use App\Models\BookPdf;
+use App\Models\BookVideo;
 use App\Models\Category;
 use App\Models\Serial;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -40,48 +43,89 @@ class BookController extends Controller
         return $this->sendResponse(BookResource::collection($books),'All Books are fetched for users');
     }
 
+
     public function store(BookRequest $request)
     {
         $data = $request->validated();
 
-        $category = Category::find($data['category_id']);
+        $category = Category::findOrFail($data['category_id']);
 
         if (!$category) {
             return self::sendError('Category not found.', [], 404);
         }
 
-        // Store the files
-        if ($request->hasFile('pdf')) {
-            $pdfPath = $request->file('pdf')->store('book-pdfs', 'public');
-            $data['pdf_path'] = $pdfPath;
-        }
-
+        // Store the cover image
         $coverPath = $request->file('cover_image')->store('book-covers', 'public');
-        $videoPath = $request->file('video')->store('book-videos', 'public');
-        $data['video'] = asset('storage/' . $videoPath); // Get the full URL for the video
         $data['cover_image'] = asset('storage/' . $coverPath); // Get the full URL for the cover image
+
+        // Create the book with validated data
         $data['serial_code'] = \Str::uuid();
-
-
         $book = Book::create($data);
+
         // Now, create the BookCategory record using the existing category_id
         BookCategory::create([
             'category_id' => $category->id,
             'book_id' => $book->id
         ]);
 
+        // Store the videos
+        if ($request->hasFile('video')) {
+            foreach ($request->file('video') as $video) {
+                $videoPath = $video->store('book-videos', 'public');
+                BookVideo::create([
+                    'path' => asset('storage/' . $videoPath), // Get the full URL for each video
+                    'book_id' => $book->id,
+                ]);
+            }
+        }
+
+        // Store the PDFs
+        if ($request->hasFile('pdf')) {
+            foreach ($request->file('pdf') as $pdf) {
+                $pdfPath = $pdf->store('book-pdfs', 'public');
+                BookPdf::create([
+                    'path' => asset('storage/' . $pdfPath), // Get the full URL for each PDF
+                    'book_id' => $book->id,
+                ]);
+            }
+        }
+
+        // Store the images
         if ($request->has('images')) {
             foreach ($request->file('images') as $image) {
                 $imagePath = $image->store('book-images', 'public');
                 BookImage::create([
-                    'path' => asset('storage/' . $imagePath), // Get the full URL for the image
+                    'path' =>  $imagePath, // Get the full URL for each image
                     'book_id' => $book->id
                 ]);
             }
         }
 
-        return self::sendResponse(BookResource::make($book), 'Book is created successfully');
+//        return 'x';
+        return self::sendResponse(BookAdminResource::make($book), 'Book is created successfully');
     }
+
+//        if ($request->has('pdf')) {
+//            foreach ($request->file('pdf') as $pdf) {
+//                $pdfPath = $pdf->store('book-pdfs', 'public');
+//                BookPdf::create([
+//                    'path' => asset('storage/' . $pdfPath),
+//                    'book_id' => $book->id,
+//                ]);
+//            }
+//        }
+//
+//        if ($request->has('video')) {
+//            foreach ($request->file('video') as $video) {
+//                $videoPath = $video->store('book-videos', 'public');
+//                BookVideo::create([
+//                    'path' => asset('storage/' . $videoPath),
+//                    'book_id' => $book->id,
+//                ]);
+//            }
+//        }
+
+
 
     //Admin get book by id
 
@@ -108,28 +152,6 @@ class BookController extends Controller
         return $this->sendResponse([], "Book updated successfully");
     }
 
-                                    //Download Book (User)
-    private function initiateDownload(Book $book)
-    {
-        $pdfPath = 'public/book-pdfs/' . basename($book->pdf_path);
-
-        if (!Storage::exists($pdfPath)) {
-            return $this->sendError('File not found', 'The requested PDF file does not exist.', 404);
-        }
-
-        return asset('storage/'.$book->pdf_path);
-    }
-
-    private function initiateVideoDownload(Book $book)
-    {
-        $videoPath = 'public/book-videos/' . basename($book->video);
-
-        if (!Storage::exists($videoPath)) {
-            return $this->sendError('File not found', 'The requested video file does not exist.', 404);
-        }
-        return $book->video;
-
-    }
 
     public function downloadFile(Request $request, $id)
     {
@@ -211,7 +233,6 @@ class BookController extends Controller
 
         // Insert serial codes into the database
         Serial::insert($serialCodes);
-        // Return the generated serial codes
         return response()->json($serialCodes);
     }
 

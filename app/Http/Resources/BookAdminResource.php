@@ -7,11 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class BookAdminResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
+
     public function toArray(Request $request): array
     {
         return [
@@ -20,27 +16,25 @@ class BookAdminResource extends JsonResource
             'description' => $this['description'],
             'level' => 'Level ' .  $this['level'],
             'cover_image' => asset($this['cover_image']),
-            'pdf' => $this->getPdfLink(),
-            'video' => $this->getVideoLink(),
-//            'video_url' => $this['video_url'],
+            'pdfs' => $this->getPdfLinks(),
+            'videos' => $this->getVideoLinks(),
             'categories' => BookCategoryResource::collection($this['categories']),
             'images' => BookImageResource::collection($this['images']),
             'book_header_id' => $this['book_header_id'],
         ];
     }
-    private function getPdfLink()
+    private function getPdfLinks()
     {
-        if ($this['pdf_path']) {
-            return asset('storage/' . $this['pdf_path']);
+        if ($this->pdfs) {
+            return BookPdfResource::collection($this->pdfs);
         }
         return null;
     }
 
-    private function getVideoLink()
+    private function getVideoLinks()
     {
-        if ($this['video']) {
-
-            return asset( $this['video']);
+        if ($this->videos) {
+            return BookVideoResource::collection($this->videos);
         }
         return null;
     }
