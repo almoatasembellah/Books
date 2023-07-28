@@ -105,26 +105,6 @@ class BookController extends Controller
         return self::sendResponse(BookAdminResource::make($book), 'Book is created successfully');
     }
 
-//        if ($request->has('pdf')) {
-//            foreach ($request->file('pdf') as $pdf) {
-//                $pdfPath = $pdf->store('book-pdfs', 'public');
-//                BookPdf::create([
-//                    'path' => asset('storage/' . $pdfPath),
-//                    'book_id' => $book->id,
-//                ]);
-//            }
-//        }
-//
-//        if ($request->has('video')) {
-//            foreach ($request->file('video') as $video) {
-//                $videoPath = $video->store('book-videos', 'public');
-//                BookVideo::create([
-//                    'path' => asset('storage/' . $videoPath),
-//                    'book_id' => $book->id,
-//                ]);
-//            }
-//        }
-
 
 
     //Admin get book by id
@@ -144,13 +124,57 @@ class BookController extends Controller
     }
 
 
-    public function update(BookRequest $request, $id)
+    public function update(BookRequest $request, Book $book)
     {
-        $book = Book::findOrFail($id);
         $data = $request->validated();
+
+        $category = Category::findOrFail($data['category_id']);
+
+        if (!$category) {
+            return self::sendError('Category not found.', [], 404);
+        }
+
+        if ($request->hasFile('cover_image')) {
+            $coverPath = $request->file('cover_image')->store('book-covers', 'public');
+            $data['cover_image'] = asset('storage/' . $coverPath); // Get the full URL for the updated cover image
+        }
+
+        if ($request->has('pdf')) {
+            $pdfPaths = [];
+            foreach ($request->file('pdf') as $pdf) {
+                $pdfPath = $pdf->store('book-pdfs', 'public');
+                $pdfPaths[] = $pdfPath;
+            }
+            $data['pdf_path'] = $pdfPaths;
+        }
+
+        if ($request->has('video')) {
+            $videoPaths = [];
+            foreach ($request->file('video') as $video) {
+                $videoPath = $video->store('book-videos', 'public');
+                $videoPaths[] = $videoPath;
+            }
+            $data['video'] = $videoPaths; // Get the full URL for the updated videos
+        }
+
         $book->update($data);
-        return $this->sendResponse([], "Book updated successfully");
+
+        // Update the BookCategory record using the existing category_id
+        $book->categories()->sync([$category->id]);
+
+        if ($request->has('images')) {
+            foreach ($request->file('images') as $image) {
+                $imagePath = $image->store('book-images', 'public');
+                BookImage::create([
+                    'path' => asset('storage/' . $imagePath), // Get the full URL for the image
+                    'book_id' => $book->id
+                ]);
+            }
+        }
+
+        return self::sendResponse(BookAdminResource::make($book), 'Book is updated successfully');
     }
+
 
 
     public function downloadFile(Request $request, $id)

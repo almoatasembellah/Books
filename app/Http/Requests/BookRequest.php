@@ -17,7 +17,6 @@ class BookRequest extends FormRequest
             'cover_image' => 'required|mimes:png,gif,jpg,jpeg|max:2048',
             'pdf' => 'required|array', // Allow an array of PDF files
             'pdf.*' => 'required|mimes:pdf',
-            'video_url' => 'url',
             'video' => 'required|array', // Allow an array of video files
             'video.*' => 'required|mimes:mp4,avi,mov',
             'category_id' => ['nullable'],

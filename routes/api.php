@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/book-headers/{id}', [BookHeaderController::class, 'update']);
     Route::resource('categories', CategoryController::class);
     Route::resource('books', BookController::class);
+    Route::put('book/{id}', [BookController::class, 'update']);
     });
 
 
